@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            padding-top: 60px;
+        }
+        .header {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 20px 0;
+            color: white;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .card {
+            margin-top: 80px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            background: white;
+            text-align: center;
+            width: 50%;
+        }
+        .btn {
+            transition: all 0.3s ease;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 25px;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .form-control {
+            border-radius: 20px;
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            text-align: center;
+        }
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            width: 80%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .result-box {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            width: 18%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">🌤 Weather Prediction</div>
+    <div class="card">
+        <label for="city" class="form-label">Enter City Name:</label>
+        <input type="text" id="city" class="form-control" placeholder="e.g., Mumbai">
+        <button class="btn btn-primary" onclick="getPrediction()">Predict</button>
+    </div>
+    
+    <div id="result" class="result-container" style="display: none;">
+        <div class="result-box" id="city-name"></div>
+        <div class="result-box" id="min-temp"></div>
+        <div class="result-box" id="max-temp"></div>
+        <div class="result-box" id="precipitation"></div>
+        <div class="result-box" id="prediction"></div>
+    </div>
+
+    <script>
+        function getPrediction() {
+            const city = document.getElementById("city").value;
+
+            if (!city) {
+                alert("Please enter a city name!");
+                return;
+            }
+
+            fetch("http://127.0.0.1:5000/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ city: city })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("result").innerHTML = `<span class="text-danger">Error: ${data.error}</span>`;
+                } else {
+                    document.getElementById("city-name").innerHTML = `🌍 City: ${data.city}`;
+                    document.getElementById("min-temp").innerHTML = `🌡 Min Temp: ${data.tmin}°C`;
+                    document.getElementById("max-temp").innerHTML = `🔥 Max Temp: ${data.tmax}°C`;
+                    document.getElementById("precipitation").innerHTML = `🌧 Precipitation: ${data.prcp} mm`;
+                    document.getElementById("prediction").innerHTML = `🌡 Prediction: <strong>${data.prediction}°C</strong>`;
+                    document.getElementById("result").style.display = "flex";
+                }
+            })
+            .catch(error => {
+                document.getElementById("result").innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
+            });
+        }
+    </script>
+</body>
+</html>
