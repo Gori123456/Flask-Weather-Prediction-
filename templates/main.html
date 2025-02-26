@@ -76,6 +76,27 @@
             width: 18%;
             text-align: center;
         }
+        .table-container {
+            display: none;
+            margin-top: 30px;
+            width: 80%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +105,7 @@
         <label for="city" class="form-label">Enter City Name:</label>
         <input type="text" id="city" class="form-control" placeholder="e.g., Mumbai">
         <button class="btn btn-primary" onclick="getPrediction()">Predict</button>
+        <button class="btn btn-secondary" onclick="showPredictions()">View Past Predictions</button>
     </div>
     
     <div id="result" class="result-container" style="display: none;">
@@ -92,6 +114,25 @@
         <div class="result-box" id="max-temp"></div>
         <div class="result-box" id="precipitation"></div>
         <div class="result-box" id="prediction"></div>
+    </div>
+
+    <div id="table-container" class="table-container">
+        <h2>Past Predictions</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>City</th>
+                    <th>Min Temp (°C)</th>
+                    <th>Max Temp (°C)</th>
+                    <th>Precipitation (mm)</th>
+                    <th>Predicted Temp (°C)</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="prediction-table">
+                <!-- Data will be inserted here dynamically -->
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -124,6 +165,32 @@
             .catch(error => {
                 document.getElementById("result").innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
             });
+        }
+
+        function showPredictions() {
+            fetch("http://127.0.0.1:5000/predictions")
+                .then(response => response.json())
+                .then(data => {
+                    let tableBody = document.getElementById("prediction-table");
+                    tableBody.innerHTML = "";
+
+                    data.forEach(entry => {
+                        let row = `<tr>
+                            <td>${entry.city}</td>
+                            <td>${entry.tmin}°C</td>
+                            <td>${entry.tmax}°C</td>
+                            <td>${entry.prcp} mm</td>
+                            <td>${entry.prediction}°C</td>
+                            <td>${entry.date}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+
+                    document.getElementById("table-container").style.display = "block";
+                })
+                .catch(error => {
+                    alert("Error fetching past predictions: " + error.message);
+                });
         }
     </script>
 </body>
