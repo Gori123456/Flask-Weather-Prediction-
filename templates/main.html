@@ -100,16 +100,21 @@
     </style>
 </head>
 <body>
-    <div class="header">🌤 Weather Prediction</div>
+    <div class="header" onclick="location.reload()">🌤 Weather Prediction</div>
     <div class="card">
         <label for="city" class="form-label">Enter City Name:</label>
         <input type="text" id="city" class="form-control" placeholder="e.g., Mumbai">
-        <button class="btn btn-primary" onclick="getPrediction()">Predict</button>
-        <button class="btn btn-secondary" onclick="showPredictions()">View Past Predictions</button>
+        
+        <label for="date" class="form-label mt-3">Select Date:</label>
+        <input type="date" id="date" class="form-control">
+
+        <button class="btn btn-primary mt-3" onclick="getPrediction()">Predict</button>
+        <button class="btn btn-secondary mt-3" onclick="showPredictions()">View Past Predictions</button>
     </div>
     
-    <div id="result" class="result-container" style="display: none;">
+    <div id="result" class="result-container">
         <div class="result-box" id="city-name"></div>
+        <div class="result-box" id="date-predicted"></div>
         <div class="result-box" id="min-temp"></div>
         <div class="result-box" id="max-temp"></div>
         <div class="result-box" id="precipitation"></div>
@@ -138,16 +143,21 @@
     <script>
         function getPrediction() {
             const city = document.getElementById("city").value;
+            const date = document.getElementById("date").value;
 
             if (!city) {
                 alert("Please enter a city name!");
+                return;
+            }
+            if (!date) {
+                alert("Please select a date!");
                 return;
             }
 
             fetch("http://127.0.0.1:5000/predict", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ city: city })
+                body: JSON.stringify({ city: city, date: date })
             })
             .then(response => response.json())
             .then(data => {
@@ -155,6 +165,7 @@
                     document.getElementById("result").innerHTML = `<span class="text-danger">Error: ${data.error}</span>`;
                 } else {
                     document.getElementById("city-name").innerHTML = `🌍 City: ${data.city}`;
+                    document.getElementById("date-predicted").innerHTML = `📅 Date: ${data.date}`;
                     document.getElementById("min-temp").innerHTML = `🌡 Min Temp: ${data.tmin}°C`;
                     document.getElementById("max-temp").innerHTML = `🔥 Max Temp: ${data.tmax}°C`;
                     document.getElementById("precipitation").innerHTML = `🌧 Precipitation: ${data.prcp} mm`;
