@@ -8,42 +8,46 @@ import joblib
 # Load dataset
 data = pd.read_csv("bombay.csv")
 
-# Check for missing values before handling
-print("Missing values before handling:\n", data.isnull().sum())
+# Convert 'datetime' to DateTime format
+data["datetime"] = pd.to_datetime(data["datetime"], format="%d-%m-%Y", errors="coerce")
 
-# Fill missing values using median strategy
+# Drop invalid dates
+data.dropna(subset=["datetime"], inplace=True)
+
+# Sort data by date (important for time series)
+data.sort_values(by="datetime", inplace=True)
+
+# Handle missing values
 imputer = SimpleImputer(strategy="median")
 data[["tavg", "tmin", "tmax", "prcp"]] = imputer.fit_transform(data[["tavg", "tmin", "tmax", "prcp"]])
 
-# Drop any remaining NaN values
-data.dropna(inplace=True)
-
-# ✅ Convert 'datetime' column (Specify format explicitly)
-data["datetime"] = pd.to_datetime(data["datetime"], format="%d-%m-%Y", errors="coerce")
-
-# Extract year, month, and day from the datetime column
+# Extract date-related features
 data["year"] = data["datetime"].dt.year
 data["month"] = data["datetime"].dt.month
 data["day"] = data["datetime"].dt.day
 
-# Drop rows where datetime conversion failed
-data.dropna(subset=["datetime"], inplace=True)
+# ✅ Add Previous Year's Temperature Feature (prev_year_tavg)
+data["prev_year_tavg"] = data.apply(
+    lambda row: data.loc[data["datetime"] == row["datetime"] - pd.DateOffset(years=1), "tavg"].mean(),
+    axis=1
+)
 
-# Define features and target variable
-X = data.drop(columns=["tavg", "datetime"])  # Features: tmin, tmax, prcp, year, month, day
-y = data["tavg"]  # Target: Average temperature
+# Handle NaN values in prev_year_tavg (for first-year records)
+data["prev_year_tavg"].fillna(data["tavg"].median(), inplace=True)  # Replace missing values with median
 
-# Split dataset into training and testing sets (80% training, 20% testing)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Define Features & Target
+X = data[["tmin", "tmax", "prcp", "year", "month", "day", "prev_year_tavg"]]  # Now includes prev_year_tavg
+y = data["tavg"]  # Target: Predicting tavg
 
-# Train a Linear Regression model
+# Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+# Train the model
 model = LinearRegression()
 model.fit(X_train, y_train)
 
-# Save the trained model
+# Save Model & Features
 joblib.dump(model, "temp_model.pkl")
-
-# Save feature names
 joblib.dump(X.columns.tolist(), "model_features.pkl")
 
-print("✅ Model trained and saved successfully!")
+print("✅ Model trained and saved successfully for future prediction!")
